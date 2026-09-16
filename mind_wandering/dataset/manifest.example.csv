@@ -1,0 +1,4 @@
+subject_id,video_path,probe_time_sec,label
+P001,data/raw/pafe/P001/session.mp4,40,focused
+P001,data/raw/pafe/P001/session.mp4,80,not_focused
+P002,data/raw/pafe/P002/session.mp4,40,focused

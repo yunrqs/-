@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 环境与配置
+.vscode/
+.idea/
+
+# 数据与模型（体积大，一般不上传）
+data/raw/
+emo/emotion/FER-2013/
+emo/models/*.pth
+
+# 其他
+*.log
+blink_log.csv

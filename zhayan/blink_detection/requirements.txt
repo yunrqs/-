@@ -1,0 +1,11 @@
+# 眨眼检测模块依赖
+# 本模块不使用 PyTorch / TensorFlow / dlib 等深度学习框架（规格说明第 3 节）。
+#
+# mediapipe 版本说明：
+# - 旧版（< 0.10.35 左右）提供 mp.solutions.face_mesh，代码走 legacy 后端；
+# - 新版（>= 0.10.35）已移除 mp.solutions，代码自动回退 tasks 后端并下载模型。
+# 两种情况均被 face_mesh.py 支持。
+# 若安装时遇到 numpy 版本冲突，可改为 `numpy>=1.24,<2.0`。
+mediapipe>=0.10.14
+opencv-python>=4.8.0
+numpy>=1.24
