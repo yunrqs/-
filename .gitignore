@@ -1,19 +1,20 @@
-# Python
-__pycache__/
+# Local environments and generated caches
+**/.venv/
+**/__pycache__/
 *.py[cod]
-*.egg-info/
-.venv/
-venv/
-
-# 环境与配置
-.vscode/
-.idea/
-
-# 数据与模型（体积大，一般不上传）
-data/raw/
-emo/emotion/FER-2013/
-emo/models/*.pth
-
-# 其他
+**/.idea/
+web-react/node_modules/
+web-react/.npm-cache/
+web-react/dist/
+web-react/test-results/
+web-react/playwright-report/
+.env
 *.log
-blink_log.csv
+backend/models/
+backend/outputs/
+data/raw/
+data/processed/
+
+# Local editor settings and generated blink recordings
+**/.vscode/
+**/blink_log.csv

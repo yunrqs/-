@@ -1,0 +1,9 @@
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+python-multipart>=0.0.18,<1.0
+numpy>=1.26,<3.0
+opencv-python>=4.8,<5.0
+torch>=2.1
+torchvision>=0.16
+# 现有 face_mesh.py 同时兼容旧 solutions 接口和新 tasks 接口。
+mediapipe>=0.10,<1.0

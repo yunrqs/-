@@ -1,0 +1,377 @@
+/* 1. 公共颜色和基础样式 */
+:root {
+  color-scheme: dark;
+  --bg: #07101d;
+  --line: #203c50;
+  --muted: #8faac2;
+  --text: #edf6ff;
+  --cyan: #42e8d1;
+  --cyan-soft: rgba(66, 232, 209, .1);
+  --blue: #5ba8ff;
+  --amber: #ffbd68;
+  --danger: #ff8191;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--bg); }
+body {
+  margin: 0;
+  color: var(--text);
+  background: radial-gradient(circle at 85% 0%, #10263b, transparent 45%), var(--bg);
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+}
+button { font: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+.icon { display: block; width: 24px; height: 24px; flex-shrink: 0; }
+
+/* 2. 侧边栏：品牌、服务状态、操作按钮、本地处理说明 */
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  padding: 22px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: linear-gradient(160deg, #0b2030, #081522 70%);
+  border-right: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 3px; }
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cyan);
+  background: linear-gradient(140deg, #134b51, #0a2531);
+  border: 1px solid #2ea89f;
+  border-radius: 13px;
+  box-shadow: 0 0 24px rgba(66, 232, 209, .07);
+  font-size: 20px;
+  font-weight: 700;
+}
+.brand strong, .brand span { display: block; }
+.brand strong { font-size: 19px; letter-spacing: -.03em; }
+.brand span { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.sidebar-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(8, 20, 33, .45);
+}
+.status-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.sidebar-status.online .status-dot { background: var(--cyan); box-shadow: 0 0 12px #249d91; }
+.sidebar-status strong { font-size: 12px; line-height: 1.6; }
+.sidebar-status p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.sidebar-toggle { margin-left: auto; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.sidebar-toggle .icon { width: 18px; height: 18px; transform: rotate(180deg); }
+.controls { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; }
+.controls-main { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #28495f transparent; }
+.control-group { flex-shrink: 0; border: 1px solid var(--line); border-radius: 13px; background: rgba(8, 20, 33, .35); }
+.group-toggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 12px; border: 0; border-radius: 12px; background: transparent; color: var(--text); font-weight: 600; cursor: pointer; }
+.group-toggle:hover, .sidebar-toggle:hover { background: #143345; }
+.group-toggle > .icon { width: 20px; height: 20px; }
+.group-label { flex: 1; text-align: left; font-size: 14px; }
+.group-chevron .icon { width: 16px; height: 16px; }
+.group-chevron.expanded { transform: rotate(90deg); }
+.group-content { padding: 0 10px 10px; }
+.group-content > :last-child { margin-bottom: 0; }
+.tools-group { margin-top: auto; }
+.side-button {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 10px;
+  color: #d5e6f5;
+  background: linear-gradient(135deg, #10283a, #0b1e2d);
+  border: 1px solid #2a495f;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.side-button:hover:not(:disabled) { background: #143345; border-color: #429085; }
+.side-button.primary {
+  color: #053332;
+  background: linear-gradient(110deg, #42e8d1, #48d8dc);
+  border-color: #53ece0;
+  box-shadow: 0 6px 24px rgba(66, 232, 209, .1);
+  font-weight: 700;
+}
+.side-button.primary:hover:not(:disabled) { background: #77eee0; }
+.side-button.active { color: var(--cyan); border-color: #32897f; background: var(--cyan-soft); }
+.side-button:disabled { opacity: .45; cursor: not-allowed; }
+.side-button > .icon { width: 20px; height: 20px; }
+.button-label { flex: 1; }
+.gaze-switch { width: 100%; display: flex; align-items: center; gap: 8px; padding: 12px 8px; margin-bottom: 10px; color: var(--text); background: #0b1e2d; border: 1px solid #2a495f; border-radius: 9px; font-size: 13px; cursor: pointer; }
+.gaze-switch:disabled { opacity: .45; cursor: not-allowed; }
+.switch-track { width: 36px; height: 22px; flex-shrink: 0; padding: 3px; border-radius: 20px; background: #536b7e; }
+.switch-track::after { content: ''; display: block; width: 16px; height: 16px; border-radius: 50%; background: white; }
+.gaze-switch[aria-checked="true"] .switch-track { background: var(--cyan); }
+.gaze-switch[aria-checked="true"] .switch-track::after { transform: translateX(14px); }
+.switch-status { color: var(--muted); font-size: 11px; }
+.point-toggle { display: flex; align-items: center; gap: 10px; padding: 7px 4px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.point-toggle input { width: 18px; height: 18px; accent-color: var(--cyan); margin: 0; }
+.privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 8px;
+}
+.privacy-note > .icon { width: 20px; height: 20px; color: var(--cyan); }
+.privacy-note strong { font-size: 13px; }
+.privacy-note p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+
+/* 3. 主区域：摄像头与情绪同行，下方展示眨眼与视线结果。 */
+.workspace { min-width: 0; padding: 30px 28px 36px; }
+.topbar {
+  max-width: 1400px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.eyebrow { margin: 0 0 9px; color: var(--cyan); font-size: 11px; letter-spacing: .13em; }
+h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-spacing: -.04em; }
+.top-status { display: flex; align-items: center; gap: 16px; color: var(--muted); font-size: 12px; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  white-space: nowrap;
+  background: rgba(12, 32, 48, .55);
+}
+.status-pill i, .live-badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+.status-pill.online i { background: var(--cyan); box-shadow: 0 0 10px #249d91; }
+#clock { padding-left: 16px; border-left: 1px solid var(--line); font-family: Consolas, monospace; }
+.dashboard {
+  max-width: 1400px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-areas: "camera emotion" "blink gaze";
+  gap: 18px;
+}
+.panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #28495f;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0d2132, #0a1a29);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .1);
+}
+.camera-panel { grid-area: camera; }
+.state-panel { grid-area: emotion; }
+.blink-panel { grid-area: blink; }
+.gaze-panel { grid-area: gaze; }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.panel h2 { margin: 0; font-size: 19px; font-weight: 700; }
+.model-tag, .confidence-label { color: var(--muted); font-size: 12px; }
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  color: var(--muted);
+  border: 1px solid #345168;
+  border-radius: 99px;
+  font-size: 12px;
+}
+.live-badge i { background: #8193a7; }
+.live-badge.live { color: var(--cyan); background: var(--cyan-soft); border-color: #32897f; }
+.live-badge.live i { background: var(--cyan); box-shadow: 0 0 8px #249d91; }
+
+/* 4. 摄像头：视频和画布都等比例缩放，保持跟踪框与人脸位置一致 */
+.video-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #040d16;
+}
+#camera, #overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#camera { transform: scaleX(-1); }
+#overlay { z-index: 2; pointer-events: none; }
+.video-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  background: radial-gradient(ellipse at center, #0b2336, #050e18 70%);
+}
+.video-placeholder.hidden { display: none; }
+.scan-symbol {
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  color: var(--cyan);
+  border: 1px solid #289f9c;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(66, 232, 209, .1), transparent);
+  box-shadow: 0 0 35px rgba(66, 232, 209, .04);
+}
+.scan-symbol .icon { width: 44px; height: 44px; }
+.video-placeholder strong { margin-top: 22px; font-size: 20px; }
+.video-placeholder p { margin: 10px 16px 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.frame-corners i { position: absolute; z-index: 4; width: 24px; height: 24px; border-color: #25a69f; border-style: solid; pointer-events: none; }
+.frame-corners i:nth-child(1) { top: 15px; left: 15px; border-width: 1px 0 0 1px; }
+.frame-corners i:nth-child(2) { top: 15px; right: 15px; border-width: 1px 1px 0 0; }
+.frame-corners i:nth-child(3) { bottom: 15px; left: 15px; border-width: 0 0 1px 1px; }
+.frame-corners i:nth-child(4) { bottom: 15px; right: 15px; border-width: 0 1px 1px 0; }
+.camera-footer { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 18px; color: var(--muted); font-size: 12px; }
+.camera-footer > span { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; min-height: 26px; }
+.camera-footer > span + span { border-left: 1px solid #2b465a; }
+.camera-footer b { color: var(--text); font-family: Consolas, "Microsoft YaHei", monospace; font-size: 14px; }
+
+/* 5. 情绪结果：只展示当前情绪和置信度 */
+.state-panel { display: flex; flex-direction: column; }
+.emotion-focus { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 12px 0 24px; text-align: center; }
+.emotion-orbit { width: 100px; height: 100px; display: grid; place-items: center; color: var(--cyan); border: 1px solid #279f98; border-radius: 50%; background: radial-gradient(circle, rgba(66, 232, 209, .09), transparent); }
+.emotion-orbit span { font-size: 38px; }
+.emotion-orbit svg { width: 50px; height: 50px; }
+.emotion-focus p { margin: 0 0 6px; color: var(--muted); font-size: 12px; }
+.emotion-focus h3 { margin: 0; font-size: 26px; text-transform: capitalize; }
+.emotion-focus > div:last-child > span { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
+.notice-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid #234e71; border-radius: 11px; background: rgba(28, 71, 106, .18); }
+.notice-mark { width: 23px; height: 23px; flex-shrink: 0; display: grid; place-items: center; color: var(--blue); border: 1px solid var(--blue); border-radius: 50%; font-family: Georgia, serif; }
+.notice-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.notice-card strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 13px; }
+
+/* 6. 眨眼结果：六项指标分成三列两行，下面是曲线 */
+.blink-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.kpi { min-width: 0; padding: 14px; border: 1px solid #29495e; border-radius: 11px; background: rgba(18, 42, 60, .45); }
+.kpi > span { color: var(--muted); font-size: 12px; }
+.kpi strong { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; margin-top: 10px; font-weight: 600; }
+.kpi b { font-family: Consolas, "Microsoft YaHei", monospace; font-size: 23px; overflow-wrap: anywhere; }
+.kpi small { color: var(--muted); font-size: 10px; font-weight: 400; }
+.chart-wrap { margin-top: 20px; }
+.chart-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; color: var(--muted); font-size: 11px; }
+.chart-label i { display: inline-block; width: 16px; height: 2px; margin: 0 6px 3px 12px; background: var(--cyan); }
+.chart-label i.threshold-key { background: var(--amber); }
+#earChart { display: block; width: 100%; height: 100px; border: 1px solid rgba(143, 170, 194, .12); border-radius: 4px; }
+
+/* 7. 操作反馈 */
+.toast { position: fixed; right: 28px; bottom: 25px; z-index: 20; max-width: min(360px, calc(100vw - 32px)); margin: 0; padding: 13px 17px; color: var(--text); background: #142c40; border: 1px solid #35556b; border-radius: 11px; box-shadow: 0 18px 40px rgba(0, 0, 0, .25); font-size: 13px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: .2s ease; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-color: #975261; color: #ffc1ca; }
+
+/* 8. 侧栏可手动收为图标栏；窄屏展开时以顶部控制区呈现。 */
+.sidebar-collapsed { grid-template-columns: 80px minmax(0, 1fr); }
+.sidebar-collapsed .sidebar { padding: 18px 8px; gap: 14px; }
+.sidebar-collapsed .brand { flex-direction: column; padding: 0; }
+.sidebar-collapsed .sidebar-toggle { margin: 0; }
+.sidebar-collapsed .sidebar-toggle .icon { transform: none; }
+.sidebar-collapsed .brand-text, .sidebar-collapsed .sidebar-status > div,
+.sidebar-collapsed .button-label, .sidebar-collapsed .group-label,
+.sidebar-collapsed .switch-status, .sidebar-collapsed .privacy-note > div { display: none; }
+.sidebar-collapsed .sidebar-status { padding: 10px; justify-content: center; }
+.sidebar-collapsed .status-dot { margin: 0; }
+.sidebar-collapsed .group-toggle { gap: 2px; padding: 12px 6px; justify-content: center; }
+.sidebar-collapsed .group-chevron .icon { width: 10px; height: 10px; }
+.sidebar-collapsed .group-content { padding: 0 5px 6px; }
+.sidebar-collapsed .side-button { padding: 10px 0; justify-content: center; }
+.sidebar-collapsed .gaze-switch { justify-content: center; padding: 10px 0; }
+.sidebar-collapsed .point-toggle, .sidebar-collapsed .privacy-note { justify-content: center; }
+@media (max-height: 850px) {
+  .sidebar { padding-top: 16px; gap: 12px; }
+  .sidebar-status { padding: 10px; }
+  .controls { gap: 10px; }
+  .group-toggle { padding-top: 10px; padding-bottom: 10px; }
+  .side-button { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
+}
+@media (max-width: 1200px) {
+  .workspace { padding: 24px 18px; }
+  .panel { padding: 16px; }
+  .panel-heading { flex-wrap: wrap; }
+  .emotion-orbit { width: 72px; height: 72px; }
+  .emotion-focus { gap: 12px; padding: 8px 0 16px; }
+  .top-status { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+}
+@media (max-width: 1000px) {
+  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "camera" "emotion" "blink" "gaze"; }
+  .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .state-panel { min-height: 320px; }
+}
+@media (max-width: 760px) {
+  .app-shell { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { position: static; height: auto; overflow: visible; }
+  .controls-main { overflow: visible; }
+  .sidebar-status { padding: 10px 14px; }
+  .controls { gap: 10px; }
+  .privacy-note { padding: 0 10px; }
+  .sidebar-collapsed { grid-template-columns: 72px minmax(0, 1fr); }
+  .sidebar-collapsed .sidebar { position: sticky; height: 100dvh; overflow: hidden; }
+  .sidebar-collapsed .controls-main { overflow-y: auto; }
+  .workspace { padding: 22px 12px; }
+  h1 { font-size: 24px; }
+  .top-status { justify-content: flex-start; font-size: 11px; }
+  .panel h2 { font-size: 17px; }
+  .camera-footer > span { flex-direction: column; gap: 6px; }
+  .camera-footer { font-size: 10px; }
+  .camera-footer b { font-size: 11px; }
+  .scan-symbol { width: 54px; height: 54px; }
+  .scan-symbol .icon { width: 28px; height: 28px; }
+  .video-placeholder strong { margin-top: 10px; font-size: 14px; }
+  .video-placeholder p { margin-top: 6px; font-size: 10px; }
+  .blink-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { padding: 10px; }
+  .kpi b { font-size: 21px; }
+  .toast { right: 16px; bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-button, .toast { transition: none; }
+}
+
+/* Independent gaze prediction: overlays never move or intercept the cursor. */
+.gaze-description, .gaze-message { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.gaze-instructions button { padding: 10px 14px; border: 1px solid #35556b; border-radius: 8px; background: #142c40; color: var(--text); cursor: pointer; }
+.gaze-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.gaze-kpis > div { min-width: 0; padding: 14px; background: rgba(18,42,60,.45); border: 1px solid #29495e; border-radius: 10px; }
+.gaze-kpis span { color: var(--muted); font-size: 12px; }
+.gaze-kpis strong { display: block; margin-top: 10px; font-size: 16px; overflow-wrap: anywhere; }
+.gaze-dot { position: fixed; width: 20px; height: 20px; transform: translate(-50%, -50%); border: 2px solid #fff; border-radius: 50%; background: #ef6f9e; box-shadow: 0 0 16px #ef6f9e; pointer-events: none; z-index: 110; }
+.gaze-calibration { position: fixed; inset: 0; z-index: 100; background: #0b1524; color: #edf5ff; }
+.gaze-instructions { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(420px, 75vw); text-align: center; font-size: 13px; }
+.gaze-validation .gaze-instructions { top: auto; bottom: 10px; transform: translateX(-50%); }
+.gaze-instructions p { color: #9fb0c6; line-height: 1.7; }
+.gaze-target { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 3px solid white; border-radius: 50%; color: #0b1524; background: #42e8d1; cursor: pointer; font-weight: 700; box-shadow: 0 0 0 7px #42e8d122; }
+.validation-target { pointer-events: none; background: #ffbd68; }
+@media (max-width: 760px) { .gaze-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .gaze-kpis { grid-template-columns: minmax(0, 1fr); } }
