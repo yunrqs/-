@@ -12,6 +12,9 @@
 │   │   │   ├── services/           # gazeService.ts：推理调度和资源释放
 │   │   │   ├── core/               # 特征、回归算法及来源许可证
 │   │   │   └── types.ts            # 视线业务类型
+│   │   ├── features/bodyrecognition/  # 疲劳驾驶识别展示
+│   │   │   ├── components/         # FatiguePanel.tsx 面板
+│   │   │   └── types.ts            # FatigueStatus 类型
 │   │   ├── components/             # 通用图标
 │   │   ├── styles/                 # 全局样式
 │   │   ├── App.tsx
@@ -26,12 +29,14 @@
 │   │   ├── modules/monitoring/      # routes.py 接口、service.py 会话
 │   │   ├── algorithms/
 │   │   │   ├── emotion/            # 情绪模型训练与推理
-│   │   │   └── blink_detection/    # EAR 和眨眼检测
+│   │   │   ├── blink_detection/    # EAR 和眨眼检测
+│   │   │   └── bodyrecognition/   # dlib 关键点 + 打哈欠 + 头部姿态疲劳识别
 │   │   ├── mind_wandering/         # 离线数据、特征、训练、推理及测试
 │   │   ├── routes/index.py         # API 路由注册
 │   │   ├── app.py                  # 生命周期与静态页面托管
 │   │   └── server.py               # 服务入口
-│   ├── models/emotion/             # 模型权重
+│   ├── models/emotion/             # 情绪模型权重
+│   ├── models/dlib/                # dlib 68 点关键点模型
 │   ├── outputs/                    # 实验结果、模型和训练图
 │   ├── tests/unit/                 # 眨眼单元测试
 │   ├── tests/integration/          # HTTP 契约测试
@@ -58,6 +63,11 @@ gaze 在浏览器内完成眼部特征提取、校准和回归预测，不调用
 浏览器模型和 WASM 保留在 public/mediapipe/face_mesh，Vite 将它们复制到 dist；FastAPI 仅在构建部署时托管这些静态资源。
 backend/src/algorithms 和 backend/models 继续用于 Python 算法及其权重。
 
+疲劳驾驶依赖方向：Monitor 页面 → features/bodyrecognition/components/FatiguePanel；
+后端 monitoring/service.py → algorithms/bodyrecognition → dlib。
+bodyrecognition 在 Python 后端计算，结果与眨眼、情绪一起打包在 /api/analyze 响应中返回；
+前端 features/bodyrecognition 仅负责展示，连续张嘴（MAR）超过阈值达到 yawn_seconds 即置 is_drowsy 并触发疲劳驾驶预警。
+
 | 原位置 | 新位置 |
 | --- | --- |
 | web-react/backend/main.py | backend/src/app.py、routes/index.py、modules/monitoring/routes.py |
@@ -73,6 +83,8 @@ backend/src/algorithms 和 backend/models 继续用于 Python 算法及其权重
 | web-react/src/features/gaze/useGazePrediction.ts | web-react/src/features/gaze/hooks/useGazePrediction.ts |
 | web-react/src/features/gaze/service.ts | web-react/src/features/gaze/services/gazeService.ts |
 | web-react/tests/gaze-regression.test.mjs | web-react/tests/unit/gaze-regression.test.mjs |
+| openface-master/demos/fatigue_detector.py | backend/src/algorithms/bodyrecognition/fatigue_detector.py |
+| openface-master/models/dlib/shape_predictor_68_face_landmarks.dat | backend/models/dlib/shape_predictor_68_face_landmarks.dat |
 
 算法计算和训练参数保持原样；调整仅涉及模块组织、包导入、资源路径与入口配置。
 Python 采用从根目录运行 `python -m backend.src...` 的包入口，避免 sys.path 注入和同名 config 冲突。

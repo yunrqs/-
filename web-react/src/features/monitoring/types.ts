@@ -1,4 +1,6 @@
 // 字段名与 FastAPI 返回的 JSON 保持一致，便于对照前后端代码。
+import type { FatigueStatus } from '../bodyrecognition/types';
+
 export type Emotion = 'angry' | 'disgust' | 'fear' | 'happy' | 'sad' | 'surprise' | 'neutral';
 
 export interface HealthResponse {
@@ -6,7 +8,7 @@ export interface HealthResponse {
   ready: boolean;
 }
 
-export interface AnalysisResult {
+export interface AnalysisResult extends FatigueStatus {
   frame_width: number;
   frame_height: number;
   face_detected: boolean;

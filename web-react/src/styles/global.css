@@ -174,7 +174,7 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
   margin: auto;
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  grid-template-areas: "camera emotion" "blink gaze";
+  grid-template-areas: "camera emotion" "blink gaze" "fatigue fatigue";
   gap: 18px;
 }
 .panel {
@@ -189,6 +189,7 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
 .state-panel { grid-area: emotion; }
 .blink-panel { grid-area: blink; }
 .gaze-panel { grid-area: gaze; }
+.fatigue-panel { grid-area: fatigue; }
 .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
 .panel h2 { margin: 0; font-size: 19px; font-weight: 700; }
 .model-tag, .confidence-label { color: var(--muted); font-size: 12px; }
@@ -272,6 +273,8 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
 .notice-mark { width: 23px; height: 23px; flex-shrink: 0; display: grid; place-items: center; color: var(--blue); border: 1px solid var(--blue); border-radius: 50%; font-family: Georgia, serif; }
 .notice-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
 .notice-card strong { display: block; margin-bottom: 4px; color: var(--text); font-size: 13px; }
+.notice-card.drowsy { border-color: var(--danger); background: rgba(255, 129, 145, .12); }
+.notice-card.drowsy .notice-mark { color: var(--danger); border-color: var(--danger); }
 
 /* 6. 眨眼结果：六项指标分成三列两行，下面是曲线 */
 .blink-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -324,7 +327,7 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
   .top-status { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 }
 @media (max-width: 1000px) {
-  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "camera" "emotion" "blink" "gaze"; }
+  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "camera" "emotion" "blink" "gaze" "fatigue"; }
   .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
   .state-panel { min-height: 320px; }
 }

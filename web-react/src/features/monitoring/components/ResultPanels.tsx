@@ -1,5 +1,6 @@
 import type { AnalysisResult, ChartPoint, Emotion } from '../types';
 import EarChart from './EarChart';
+import FatiguePanel from '../../bodyrecognition/components/FatiguePanel';
 
 const emotionMeta: Record<Emotion, [string, string]> = {
   angry: ['愤怒', '!'],
@@ -103,6 +104,8 @@ export default function ResultPanels({ result, history }: Props) {
           <EarChart history={history} />
         </div>
       </article>
+
+      <FatiguePanel status={result} />
     </>
   );
 }

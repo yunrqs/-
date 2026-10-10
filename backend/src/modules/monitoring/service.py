@@ -9,7 +9,7 @@ import time
 import cv2
 import numpy as np
 
-from backend.src.config.paths import DEFAULT_EMOTION_MODEL
+from backend.src.config.paths import DEFAULT_EMOTION_MODEL, DEFAULT_FACE_PREDICTOR
 
 
 class AnalysisSession:
@@ -17,6 +17,7 @@ class AnalysisSession:
         self.lock = threading.Lock()
         self.blink_detector = None
         self.emotion_recognizer = None
+        self.fatigue_detector = None
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
         self.started_at = time.monotonic()
         self.frames = 0
@@ -24,7 +25,11 @@ class AnalysisSession:
 
     @property
     def ready(self) -> bool:
-        return self.blink_detector is not None and self.emotion_recognizer is not None
+        return (
+            self.blink_detector is not None
+            and self.emotion_recognizer is not None
+            and self.fatigue_detector is not None
+        )
 
     def start(self) -> None:
         with self.lock:
@@ -33,21 +38,26 @@ class AnalysisSession:
             from backend.src.algorithms.blink_detection.blink_detector import BlinkDetector
             from backend.src.algorithms.blink_detection.config import BlinkConfig
             from backend.src.algorithms.emotion.use_model import EmotionRecognizer
+            from backend.src.algorithms.bodyrecognition.fatigue_detector import FatigueDetector
 
             model = DEFAULT_EMOTION_MODEL
             if not model.is_file():
                 raise FileNotFoundError(f"情绪模型不存在：{model}")
+            if not DEFAULT_FACE_PREDICTOR.is_file():
+                raise FileNotFoundError(f"dlib 关键点模型不存在：{DEFAULT_FACE_PREDICTOR}")
             # 两个模型都成功后再更新会话，加载失败时释放已经创建的资源。
             detector = BlinkDetector(BlinkConfig(mode="robust"))
             try:
                 # 旧模块的 Unicode 输出在部分 Windows 控制台会报编码错误。
                 with contextlib.redirect_stdout(io.StringIO()):
                     recognizer = EmotionRecognizer(str(model))
+                fatigue = FatigueDetector()
             except Exception:
                 detector.close()
                 raise
             self.blink_detector = detector
             self.emotion_recognizer = recognizer
+            self.fatigue_detector = fatigue
             self.started_at = time.monotonic()
 
     def close(self) -> None:
@@ -57,6 +67,9 @@ class AnalysisSession:
                 self.blink_detector.close()
             self.blink_detector = None
             self.emotion_recognizer = None
+            if self.fatigue_detector is not None:
+                self.fatigue_detector.close()
+            self.fatigue_detector = None
 
     def reset(self) -> None:
         with self.lock:
@@ -64,6 +77,8 @@ class AnalysisSession:
                 self.blink_detector.reset()
             if self.emotion_recognizer is not None and hasattr(self.emotion_recognizer, "history"):
                 self.emotion_recognizer.history.clear()
+            if self.fatigue_detector is not None:
+                self.fatigue_detector.reset()
             self.started_at = time.monotonic()
             self.frames = 0
             self.face_frames = 0
@@ -74,6 +89,7 @@ class AnalysisSession:
                 raise RuntimeError("识别模型尚未加载")
             self.frames += 1
             blink = self.blink_detector.process_frame(frame)
+            fatigue = self.fatigue_detector.process_frame(frame)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
             face_box = None
@@ -103,5 +119,12 @@ class AnalysisSession:
                 "emotion": emotion,
                 "emotion_confidence": confidence,
                 "emotion_probabilities": probabilities,
+                "mar": fatigue.mar,
+                "pitch": fatigue.pitch,
+                "yaw": fatigue.yaw,
+                "roll": fatigue.roll,
+                "is_yawning": fatigue.is_yawning,
+                "yawn_duration": fatigue.yawn_duration,
+                "is_drowsy": fatigue.is_drowsy,
             }
 

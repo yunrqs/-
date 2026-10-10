@@ -3,6 +3,10 @@ uvicorn>=0.30,<1.0
 python-multipart>=0.0.18,<1.0
 numpy>=1.26,<3.0
 opencv-python>=4.8,<5.0
+# 疲劳驾驶识别（bodyrecognition）依赖 dlib 68 点关键点检测。
+# Windows 上官方 dlib 无预编译 wheel（只有源码包，需 CMake 编译），
+# 改用同名模块的 dlib-bin（提供 cp311 预编译 wheel，import dlib 语义一致）。
+dlib-bin>=19.24,<21.0
 torch>=2.1
 torchvision>=0.16
 # 现有 face_mesh.py 同时兼容旧 solutions 接口和新 tasks 接口。
