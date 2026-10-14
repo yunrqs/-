@@ -143,7 +143,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .privacy-note strong { font-size: 13px; }
 .privacy-note p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
 
-/* 3. 主区域：摄像头与情绪同行，下方展示眨眼与视线结果。 */
+/* 3. 主区域：实时画面占满整行，疲劳驾驶与情绪状态并列，下方展示眨眼与视线结果。 */
 .workspace { min-width: 0; padding: 30px 28px 36px; }
 .topbar {
   max-width: 1400px;
@@ -173,8 +173,8 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
   max-width: 1400px;
   margin: auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  grid-template-areas: "camera emotion" "blink gaze" "fatigue fatigue";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "camera camera" "fatigue emotion" "blink gaze";
   gap: 18px;
 }
 .panel {
@@ -206,6 +206,22 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
 .live-badge i { background: #8193a7; }
 .live-badge.live { color: var(--cyan); background: var(--cyan-soft); border-color: #32897f; }
 .live-badge.live i { background: var(--cyan); box-shadow: 0 0 8px #249d91; }
+.camera-panel .panel-heading { position: relative; }
+.fatigue-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 6px 16px;
+  color: var(--cyan);
+  border: 1px solid #32897f;
+  border-radius: 99px;
+  background: var(--cyan-soft);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.fatigue-status.drowsy { color: var(--amber); border-color: #a8723a; background: rgba(255, 189, 104, .12); }
 
 /* 4. 摄像头：视频和画布都等比例缩放，保持跟踪框与人脸位置一致 */
 .video-stage {
@@ -327,7 +343,7 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
   .top-status { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 }
 @media (max-width: 1000px) {
-  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "camera" "emotion" "blink" "gaze" "fatigue"; }
+  .dashboard { grid-template-columns: minmax(0, 1fr); grid-template-areas: "camera" "fatigue" "emotion" "blink" "gaze"; }
   .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
   .state-panel { min-height: 320px; }
 }

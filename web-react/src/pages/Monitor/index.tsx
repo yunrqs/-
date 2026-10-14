@@ -262,6 +262,7 @@ export default function App() {
         <article className="panel camera-panel">
           <div className="panel-heading">
             <h2>实时画面</h2>
+            <span className={`fatigue-status${result?.is_drowsy ? ' drowsy' : ''}`}>{result ? (result.is_drowsy ? '疲劳' : '正常') : '—'}</span>
             <div className={`live-badge${analyzing ? ' live' : ''}`}><i /><span>{analyzing ? '实时分析' : cameraOn ? '已暂停' : '待机'}</span></div>
           </div>
           <div className="video-stage" style={{ aspectRatio: videoAspectRatio }}>

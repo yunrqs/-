@@ -41,15 +41,6 @@ export default function FatiguePanel({ status }: Props) {
           <strong><b>{number(status?.roll, 1)}</b><small>°</small></strong>
         </div>
       </div>
-      <div className={`notice-card${status?.is_drowsy ? ' drowsy' : ''}`}>
-        <span className="notice-mark">{status?.is_drowsy ? '!' : 'i'}</span>
-        <p>
-          <strong>{status?.is_drowsy ? '疲劳驾驶预警' : '状态正常'}</strong>
-          {status?.is_drowsy
-            ? '连续张嘴超过阈值，疑似疲劳驾驶，请注意休息。'
-            : '未检测到持续打哈欠行为。'}
-        </p>
-      </div>
     </article>
   );
 }
