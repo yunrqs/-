@@ -29,5 +29,9 @@ export interface FatigueStatus {
   is_yawning: boolean;
   yawn_duration: number;
   is_drowsy: boolean;
+  is_fatigued: boolean;
+  eye_drowsy: boolean;
+  emotion_drowsy: boolean;
+  gaze_drowsy: boolean;
   pose: BodyPoseStatus | null;
 }

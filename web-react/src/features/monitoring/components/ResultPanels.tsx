@@ -19,9 +19,10 @@ function number(value: number | null | undefined, digits: number, fallback = '�
 interface Props {
   result: AnalysisResult | null;
   history: ChartPoint[];
+  gazeDrowsy?: boolean;
 }
 
-export default function ResultPanels({ result, history }: Props) {
+export default function ResultPanels({ result, history, gazeDrowsy = false }: Props) {
   const emotion = result?.emotion;
   const meta = emotion ? emotionMeta[emotion] : null;
 
@@ -29,8 +30,35 @@ export default function ResultPanels({ result, history }: Props) {
     ? `${(result.emotion_confidence * 100).toFixed(1)}%`
     : '—';
 
+  const isFatigued = (result?.is_fatigued ?? false) || gazeDrowsy;
+  const signals = [
+    { key: 'eye', label: '闭眼', active: result?.eye_drowsy ?? false },
+    { key: 'yawn', label: '打哈欠/肢体', active: result?.is_drowsy ?? false },
+    { key: 'emotion', label: '情绪', active: result?.emotion_drowsy ?? false },
+    { key: 'gaze', label: '视线', active: (result?.gaze_drowsy ?? false) || gazeDrowsy },
+  ];
+
   return (
     <>
+      <article className="panel verdict-panel">
+        <div className="panel-heading">
+          <div><h2>疲劳判定</h2></div>
+          <span className="model-tag">多信号融合</span>
+        </div>
+        <div className={`verdict-banner${isFatigued ? ' fatigued' : ''}`}>
+          <span className="verdict-mark">{isFatigued ? '!' : '✓'}</span>
+          <div>
+            <strong>{isFatigued ? '疑似疲劳驾驶' : '状态正常'}</strong>
+            <p>{result ? (isFatigued ? '检测到疲劳信号，请及时休息。' : '未检测到明显疲劳信号。') : '开启识别后显示判定结果'}</p>
+          </div>
+        </div>
+        <div className="verdict-signals">
+          {signals.map((signal) => (
+            <span key={signal.key} className={`signal-chip${signal.active ? ' active' : ''}`}>{signal.label}</span>
+          ))}
+        </div>
+      </article>
+
       <article className="panel state-panel">
         <div className="panel-heading">
           <div><h2>情绪状态</h2></div>

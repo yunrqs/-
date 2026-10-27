@@ -12,6 +12,21 @@ import numpy as np
 
 from backend.src.config.paths import DEFAULT_EMOTION_MODEL, DEFAULT_FACE_PREDICTOR
 
+# 情绪 -> 疲劳 的映射规则参数（与 BodyRecognitionConfig 相互独立的融合参数）。
+# 情绪：FER-2013 七类中没有"困倦"，为每种情绪设定对疲劳的贡献权重，用加权分
+# 近似困倦程度——低落/呆滞类权重高，警觉/兴奋类权重低。
+EMOTION_FATIGUE_WEIGHTS = {
+    "angry": 0.1,
+    "disgust": 0.1,
+    "fear": 0.0,
+    "happy": 0.0,
+    "sad": 1.0,
+    "surprise": 0.0,
+    "neutral": 0.25,
+}
+EMOTION_DROWSY_SCORE_THRESHOLD = 0.5
+EMOTION_DROWSY_SECONDS = 3.0
+
 
 class AnalysisSession:
     def __init__(self) -> None:
@@ -23,6 +38,7 @@ class AnalysisSession:
         self.started_at = time.monotonic()
         self.frames = 0
         self.face_frames = 0
+        self._emotion_drowsy_start = None
 
     @property
     def ready(self) -> bool:
@@ -83,6 +99,7 @@ class AnalysisSession:
             self.started_at = time.monotonic()
             self.frames = 0
             self.face_frames = 0
+            self._emotion_drowsy_start = None
 
     def analyze(self, frame: np.ndarray) -> dict:
         with self.lock:
@@ -105,7 +122,7 @@ class AnalysisSession:
             if blink.face_detected:
                 self.face_frames += 1
             elapsed = max(time.monotonic() - self.started_at, 1.0)
-            fatigue_flags = self._combine_fatigue(blink, fatigue, emotion, confidence)
+            fatigue_flags = self._combine_fatigue(blink, fatigue, probabilities)
             return {
                 "frame_width": int(frame.shape[1]),
                 "frame_height": int(frame.shape[0]),
@@ -137,12 +154,12 @@ class AnalysisSession:
                 "pose": asdict(fatigue.pose) if fatigue.pose is not None else None,
             }
 
-    def _combine_fatigue(self, blink, fatigue, emotion, emotion_confidence) -> dict:
+    def _combine_fatigue(self, blink, fatigue, emotion_probabilities) -> dict:
         """汇总各信号源，得到最终疲劳判定。
 
-        这是所有疲劳信号的唯一融合点：眨眼、打哈欠/肢体动作已接入；
-        情绪与视线为预留在位组合点，待确定各自的"疲劳信号 -> 布尔判定"规则后
-        在本方法内补充（无需改动 ``analyze`` 或上层接口）。
+        眨眼、打哈欠/肢体动作、情绪三个信号任一满足即判定为疲劳；情绪采用
+        "加权分 + 持续时长"判定（每种情绪对疲劳的贡献权重见顶部常量），
+        视线疲劳由前端"屏幕中央注视区"判定，后端只保留字段占位。
         """
         # 眨眼：眼睛持续闭合（状态机 CLOSED 需连续多帧低 EAR，非单帧抖动）。
         eye_drowsy = bool(
@@ -150,10 +167,31 @@ class AnalysisSession:
         )
         # 打哈欠 + 肢体动作：FatigueDetector 内部已完成时长判定后置位。
         yawn_pose_drowsy = bool(fatigue is not None and fatigue.is_drowsy)
-        # 情绪：预留在位，尚未接入情绪 -> 疲劳的映射（如低落/困倦持续时长）。
-        emotion_drowsy = False  # TODO(情绪): 依据 emotion/emotion_confidence 判定。
-        # 视线：预留在位，实时视线检测暂未接入（离线仅 mind_wandering 有眼动特征）。
-        gaze_drowsy = False  # TODO(视线): 接入注视偏移/眼动特征后再判定。
+
+        now = time.monotonic()
+
+        # 情绪 -> 疲劳：七类情绪概率按权重加权，加权分达到阈值且持续达时长后置位。
+        emotion_score = (
+            sum(
+                emotion_probabilities.get(label, 0.0) * weight
+                for label, weight in EMOTION_FATIGUE_WEIGHTS.items()
+            )
+            if emotion_probabilities
+            else 0.0
+        )
+        if emotion_score >= EMOTION_DROWSY_SCORE_THRESHOLD:
+            if self._emotion_drowsy_start is None:
+                self._emotion_drowsy_start = now
+            emotion_duration = now - self._emotion_drowsy_start
+        else:
+            self._emotion_drowsy_start = None
+            emotion_duration = 0.0
+        emotion_drowsy = emotion_duration >= EMOTION_DROWSY_SECONDS
+
+        # 视线 -> 疲劳：由前端真实视线（MediaPipe 落点）相对"屏幕中央注视区"判定，
+        # 后端无实时视线数据，此处仅保留接口字段，前端会把结果并入最终判定。
+        gaze_drowsy = False
+
         is_fatigued = eye_drowsy or yawn_pose_drowsy or emotion_drowsy or gaze_drowsy
         return {
             "is_fatigued": is_fatigued,

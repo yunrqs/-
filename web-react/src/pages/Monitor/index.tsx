@@ -8,6 +8,18 @@ import type { AnalysisResult, ChartPoint } from '../../features/monitoring/types
 import GazePanel from '../../features/gaze/components/GazePanel';
 import { useGazePrediction } from '../../features/gaze/hooks/useGazePrediction';
 import type { BodyPoseStatus } from '../../features/bodyrecognition/types';
+import type { GazePoint } from '../../features/gaze/types';
+
+// 屏幕中央注视区：视线落点在该矩形内视为「注视前方/看屏」，落到区域外（含屏幕外）
+// 并持续一段时间即视为视线疲劳。
+const GAZE_REGION = { xMin: 0.2, xMax: 0.8, yMin: 0.2, yMax: 0.8 };
+const GAZE_OUTSIDE_SECONDS = 3;
+
+function inGazeRegion(point: GazePoint | null): boolean {
+  if (!point || !point.inViewport) return false;
+  return point.normalizedX >= GAZE_REGION.xMin && point.normalizedX <= GAZE_REGION.xMax
+    && point.normalizedY >= GAZE_REGION.yMin && point.normalizedY <= GAZE_REGION.yMax;
+}
 
 // 上传到后端的帧做了水平镜像（captureVideo 内 scale(-1,1)），OpenPose 返回的
 // left/right 与用户真实左右相反；这里交换左右字段让面板数据与真实肢体一致。
@@ -99,9 +111,13 @@ export default function App() {
   const [history, setHistory] = useState<ChartPoint[]>([]);
   const [toast, setToast] = useState({ message: '', error: false });
   const [showPoseKeypoints, setShowPoseKeypoints] = useState(false);
+  // 视图切换：摄像头页放实时画面与控制，数据页放结果面板。视频元素始终挂载，切换不影响采集与分析。
+  const [view, setView] = useState<'camera' | 'data'>('camera');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const gaze = useGazePrediction(videoRef, cameraOn);
+  const [gazeDrowsy, setGazeDrowsy] = useState(false);
+  const gazeOutsideSinceRef = useRef<number | null>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
@@ -109,6 +125,24 @@ export default function App() {
   const pendingFrameRef = useRef<Promise<void> | null>(null);
   // 每次停止时更新编号，旧请求返回后发现编号不同，就不再更新页面。
   const runIdRef = useRef(0);
+
+  // 视线疲劳：视线落点持续位于「屏幕中央注视区」之外（含屏幕外）达到时长阈值后置位。
+  useEffect(() => {
+    const point = gaze.frame.point;
+    const active = gaze.status === 'running' && gaze.calibrated;
+    if (!active || !point) {
+      gazeOutsideSinceRef.current = null;
+      setGazeDrowsy(false);
+      return;
+    }
+    if (!inGazeRegion(point)) {
+      if (gazeOutsideSinceRef.current === null) gazeOutsideSinceRef.current = performance.now();
+      setGazeDrowsy(performance.now() - gazeOutsideSinceRef.current >= GAZE_OUTSIDE_SECONDS * 1000);
+    } else {
+      gazeOutsideSinceRef.current = null;
+      setGazeDrowsy(false);
+    }
+  }, [gaze.frame.point, gaze.calibrated, gaze.status]);
 
   function notify(message: string, error = false) {
     if (!mountedRef.current) return;
@@ -320,7 +354,9 @@ export default function App() {
     }
   }
 
-  return <div className={`app-shell${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+  const fatigued = (result?.is_fatigued ?? false) || gazeDrowsy;
+
+  return <div className={`app-shell${sidebarCollapsed ? ' sidebar-collapsed' : ''}${view === 'data' ? ' view-data' : ''}`}>
     <Sidebar cameraOn={cameraOn} cameraLoading={cameraLoading} modelLoading={modelLoading}
       gaze={gaze} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed(value => !value)}
       serviceOnline={service.online} serviceText={service.text}
@@ -330,6 +366,12 @@ export default function App() {
     <main className="workspace">
       <header className="topbar">
         <div><p className="eyebrow">FOCUSLENS / 视觉状态实验台</p><h1>情绪与眨眼监测</h1></div>
+        <nav className="view-tabs" aria-label="视图切换">
+          <button type="button" className={view === 'camera' ? 'active' : ''} aria-current={view === 'camera' ? 'page' : undefined}
+            onClick={() => setView('camera')}>摄像头</button>
+          <button type="button" className={view === 'data' ? 'active' : ''} aria-current={view === 'data' ? 'page' : undefined}
+            onClick={() => setView('data')}>数据</button>
+        </nav>
         <div className="top-status">
           <span className={`status-pill ${service.online ? 'online' : 'offline'}`}><i />{service.text}</span>
           <time id="clock">{clock}</time>
@@ -339,7 +381,7 @@ export default function App() {
         <article className="panel camera-panel">
           <div className="panel-heading">
             <h2>实时画面</h2>
-            <span className={`fatigue-status${result?.is_drowsy ? ' drowsy' : ''}`}>{result ? (result.is_drowsy ? '疲劳' : '正常') : '—'}</span>
+            <span className={`fatigue-status${fatigued ? ' drowsy' : ''}`}>{result || gazeDrowsy ? (fatigued ? '疲劳' : '正常') : '—'}</span>
             <div className={`live-badge${analyzing ? ' live' : ''}`}><i /><span>{analyzing ? '实时分析' : cameraOn ? '已暂停' : '待机'}</span></div>
           </div>
           <div className="video-stage" style={{ aspectRatio: videoAspectRatio }}>
@@ -356,7 +398,7 @@ export default function App() {
             <span>人脸状态 <b style={{ color: analyzing && result?.face_detected ? 'var(--cyan)' : undefined }}>{!analyzing ? '未检测' : result?.face_detected ? '已锁定' : '未检测'}</b></span>
           </div>
         </article>
-        <ResultPanels result={result} history={history} />
+        <ResultPanels result={result} history={history} gazeDrowsy={gazeDrowsy} />
         <GazePanel gaze={gaze} />
       </section>
       <p className={`toast${toast.message ? ' show' : ''}${toast.error ? ' error' : ''}`} role="status">{toast.message}</p>

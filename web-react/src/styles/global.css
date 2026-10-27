@@ -401,3 +401,86 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
 .validation-target { pointer-events: none; background: #ffbd68; }
 @media (max-width: 760px) { .gaze-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .gaze-kpis { grid-template-columns: minmax(0, 1fr); } }
+
+/* 10. 视图切换：摄像头页只显示实时画面与侧栏控制，数据页只显示结果面板。
+   视频元素始终挂载（display:none 不暂停播放），切换页面不中断采集与分析。 */
+.view-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: rgba(12, 32, 48, .55);
+}
+.view-tabs button {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.view-tabs button:hover { color: var(--text); }
+.view-tabs button.active {
+  color: #053332;
+  background: linear-gradient(110deg, #42e8d1, #48d8dc);
+  font-weight: 700;
+}
+/* 摄像头视图（默认）：隐藏结果面板，只显示摄像头面板。 */
+.dashboard .verdict-panel,
+.dashboard .state-panel,
+.dashboard .blink-panel,
+.dashboard .gaze-panel,
+.dashboard .fatigue-panel { display: none; }
+/* 数据视图：隐藏摄像头面板和侧边栏，显示结果面板（疲劳判定在最上方整行）。 */
+.view-data .sidebar { display: none; }
+.view-data { grid-template-columns: minmax(0, 1fr); }
+.view-data .dashboard { grid-template-areas: "verdict verdict" "fatigue emotion" "blink gaze"; }
+.view-data .camera-panel { display: none; }
+.view-data .verdict-panel,
+.view-data .blink-panel,
+.view-data .gaze-panel,
+.view-data .fatigue-panel { display: block; }
+.view-data .state-panel { display: flex; }
+@media (max-width: 1000px) {
+  .view-data .dashboard { grid-template-areas: "verdict" "fatigue" "emotion" "blink" "gaze"; }
+}
+
+/* 11. 疲劳判定：多信号融合的最终结果展示 */
+.verdict-panel { grid-area: verdict; }
+.verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #32897f;
+  border-radius: 14px;
+  background: rgba(66, 232, 209, .08);
+}
+.verdict-banner.fatigued { border-color: #a8723a; background: rgba(255, 189, 104, .1); }
+.verdict-mark {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #053332;
+  border-radius: 50%;
+  background: linear-gradient(110deg, #42e8d1, #48d8dc);
+}
+.verdict-banner.fatigued .verdict-mark { color: #3a2508; background: linear-gradient(110deg, #ffbd68, #ff9a4d); }
+.verdict-banner strong { display: block; font-size: 20px; }
+.verdict-banner p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.verdict-signals { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.signal-chip {
+  padding: 7px 14px;
+  border: 1px solid #29495e;
+  border-radius: 99px;
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(18, 42, 60, .45);
+}
+.signal-chip.active { color: var(--amber); border-color: #a8723a; background: rgba(255, 189, 104, .12); }
