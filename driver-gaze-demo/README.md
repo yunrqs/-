@@ -27,6 +27,9 @@ New-Item -ItemType Directory -Force .\EyeCue\checkpoints | Out-Null
 Copy-Item "D:\path\to\best_model.pth" .\EyeCue\checkpoints\best_model.pth
 ```
 
+To download the public checkpoint instead:
+
+```powershell
 New-Item -ItemType Directory -Force .\EyeCue\checkpoints | Out-Null
 curl.exe -L --fail --retry 5 --output .\EyeCue\checkpoints\best_model.pth "https://huggingface.co/Thorfinn11111/eyecue_best_model/resolve/main/best_model.pth"
 Get-Item .\EyeCue\checkpoints\best_model.pth | Select-Object Name,Length
