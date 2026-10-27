@@ -190,6 +190,13 @@ h1 { margin: 0; font-size: clamp(25px, 2.5vw, 36px); font-weight: 700; letter-sp
 .blink-panel { grid-area: blink; }
 .gaze-panel { grid-area: gaze; }
 .fatigue-panel { grid-area: fatigue; }
+.fatigue-panel .pose-heading {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #29495e;
+  margin-bottom: 14px;
+}
+.fatigue-panel .pose-empty { margin: 0; color: var(--muted); font-size: 13px; }
 .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
 .panel h2 { margin: 0; font-size: 19px; font-weight: 700; }
 .model-tag, .confidence-label { color: var(--muted); font-size: 12px; }

@@ -7,9 +7,79 @@ import Icon from '../../components/Icon';
 import type { AnalysisResult, ChartPoint } from '../../features/monitoring/types';
 import GazePanel from '../../features/gaze/components/GazePanel';
 import { useGazePrediction } from '../../features/gaze/hooks/useGazePrediction';
+import type { BodyPoseStatus } from '../../features/bodyrecognition/types';
+
+// 上传到后端的帧做了水平镜像（captureVideo 内 scale(-1,1)），OpenPose 返回的
+// left/right 与用户真实左右相反；这里交换左右字段让面板数据与真实肢体一致。
+// 坐标值本身不改动，因此画面上的骨架标注位置不受影响。
+function alignPoseSides(pose: BodyPoseStatus | null): BodyPoseStatus | null {
+  if (!pose) return pose;
+  return {
+    ...pose,
+    left_shoulder: pose.right_shoulder,
+    right_shoulder: pose.left_shoulder,
+    left_elbow: pose.right_elbow,
+    right_elbow: pose.left_elbow,
+    left_wrist: pose.right_wrist,
+    right_wrist: pose.left_wrist,
+    left_hip: pose.right_hip,
+    right_hip: pose.left_hip,
+    left_elbow_angle: pose.right_elbow_angle,
+    right_elbow_angle: pose.left_elbow_angle,
+    left_wrist_raise: pose.right_wrist_raise,
+    right_wrist_raise: pose.left_wrist_raise,
+  };
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '操作失败，请重试';
+}
+
+// OpenPose 上半身关键点名称，与后端 BodyPoseResult 字段保持一致。
+type PoseKey = 'nose' | 'neck' | 'left_shoulder' | 'right_shoulder'
+  | 'left_elbow' | 'right_elbow' | 'left_wrist' | 'right_wrist'
+  | 'left_hip' | 'right_hip';
+
+// 连接顺序决定了骨架连线；相邻两点画一条线。
+const POSE_BONES: ReadonlyArray<[PoseKey, PoseKey]> = [
+  ['nose', 'neck'],
+  ['neck', 'left_shoulder'], ['neck', 'right_shoulder'],
+  ['left_shoulder', 'right_shoulder'],
+  ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
+  ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
+  ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip'],
+  ['left_hip', 'right_hip'],
+];
+
+function drawPoseKeypoints(context: CanvasRenderingContext2D, pose: BodyPoseStatus) {
+  const points: Record<PoseKey, [number, number] | null> = {
+    nose: pose.nose, neck: pose.neck,
+    left_shoulder: pose.left_shoulder, right_shoulder: pose.right_shoulder,
+    left_elbow: pose.left_elbow, right_elbow: pose.right_elbow,
+    left_wrist: pose.left_wrist, right_wrist: pose.right_wrist,
+    left_hip: pose.left_hip, right_hip: pose.right_hip,
+  };
+  const color = '#b48cff';
+  context.strokeStyle = color;
+  context.fillStyle = color;
+  context.lineWidth = 2;
+  context.setLineDash([]);
+  for (const [a, b] of POSE_BONES) {
+    const start = points[a];
+    const end = points[b];
+    if (!start || !end) continue;
+    context.beginPath();
+    context.moveTo(start[0], start[1]);
+    context.lineTo(end[0], end[1]);
+    context.stroke();
+  }
+  for (const key of Object.keys(points) as PoseKey[]) {
+    const point = points[key];
+    if (!point) continue;
+    context.beginPath();
+    context.arc(point[0], point[1], 3, 0, Math.PI * 2);
+    context.fill();
+  }
 }
 
 export default function App() {
@@ -28,6 +98,7 @@ export default function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<ChartPoint[]>([]);
   const [toast, setToast] = useState({ message: '', error: false });
+  const [showPoseKeypoints, setShowPoseKeypoints] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const gaze = useGazePrediction(videoRef, cameraOn);
@@ -158,7 +229,7 @@ export default function App() {
         if (cancelled || runId !== runIdRef.current) return;
         const nextResult = await api.analyzeFrame(blob);
         if (cancelled || runId !== runIdRef.current) return;
-        setResult(nextResult);
+        setResult({ ...nextResult, pose: alignPoseSides(nextResult.pose) });
         setHistory((previous) => [...previous, { ear: nextResult.ear, threshold: nextResult.threshold }].slice(-80));
         const completed = performance.now();
         frameTimes.push(completed - lastCompleted);
@@ -187,22 +258,27 @@ export default function App() {
     const context = canvas.getContext('2d');
     if (!context) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    if (!analyzing || !cameraOn || !result?.face_box) return;
+    if (!analyzing || !cameraOn || !result) return;
     canvas.width = result.frame_width;
     canvas.height = result.frame_height;
-    const [x, y, width, height] = result.face_box;
-    const color = result.blink_detected ? '#ffbd68' : '#42e8d1';
-    context.strokeStyle = color;
-    context.lineWidth = 2;
-    context.setLineDash([12, 7]);
-    context.strokeRect(x, y, width, height);
-    context.setLineDash([]);
-    context.fillStyle = 'rgba(7,16,29,.82)';
-    context.fillRect(x, Math.max(0, y - 22), 105, 19);
-    context.fillStyle = color;
-    context.font = '10px ui-monospace, monospace';
-    context.fillText(result.blink_detected ? 'BLINK DETECTED' : 'FACE TRACKED', x + 7, Math.max(13, y - 9));
-  }, [result, analyzing, cameraOn]);
+    if (result.face_box) {
+      const [x, y, width, height] = result.face_box;
+      const color = result.blink_detected ? '#ffbd68' : '#42e8d1';
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.setLineDash([12, 7]);
+      context.strokeRect(x, y, width, height);
+      context.setLineDash([]);
+      context.fillStyle = 'rgba(7,16,29,.82)';
+      context.fillRect(x, Math.max(0, y - 22), 105, 19);
+      context.fillStyle = color;
+      context.font = '10px ui-monospace, monospace';
+      context.fillText(result.blink_detected ? 'BLINK DETECTED' : 'FACE TRACKED', x + 7, Math.max(13, y - 9));
+    }
+    if (showPoseKeypoints && result.pose?.person_detected) {
+      drawPoseKeypoints(context, result.pose);
+    }
+  }, [result, analyzing, cameraOn, showPoseKeypoints]);
 
   async function resetStats() {
     if (resetting || modelLoading) return;
@@ -249,7 +325,8 @@ export default function App() {
       gaze={gaze} collapsed={sidebarCollapsed} onToggleCollapsed={() => setSidebarCollapsed(value => !value)}
       serviceOnline={service.online} serviceText={service.text}
       analyzing={analyzing} resetting={resetting} onCamera={toggleCamera} onStart={startAnalysis}
-      onPause={pauseAnalysis} onReset={resetStats} onCapture={saveCapture} />
+      onPause={pauseAnalysis} onReset={resetStats} onCapture={saveCapture}
+      showPoseKeypoints={showPoseKeypoints} onTogglePoseKeypoints={setShowPoseKeypoints} />
     <main className="workspace">
       <header className="topbar">
         <div><p className="eyebrow">FOCUSLENS / 视觉状态实验台</p><h1>情绪与眨眼监测</h1></div>

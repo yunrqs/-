@@ -12,6 +12,8 @@ interface Props {
   serviceText: string;
   gaze: GazePrediction;
   collapsed: boolean;
+  showPoseKeypoints: boolean;
+  onTogglePoseKeypoints: (checked: boolean) => void;
   onToggleCollapsed: () => void;
   onCamera: () => void;
   onStart: () => void;
@@ -86,6 +88,13 @@ export default function Sidebar(props: Props) {
         <SideButton icon="fullscreen" onClick={() => void gaze.toggleFullscreen()} aria-label="切换全屏" title="切换全屏">切换全屏</SideButton>
         <label className="point-toggle" title="显示落点"><input type="checkbox" checked={gaze.showPoint}
           aria-label="显示落点" onChange={event => gaze.setShowPoint(event.target.checked)} /><span className="button-label">显示落点</span></label>
+      </ControlGroup>
+      <ControlGroup id="overlay-controls" label="画面标注" icon="target">
+        <label className="point-toggle" title="在实时画面上显示 OpenPose 肢体关键点">
+          <input type="checkbox" checked={props.showPoseKeypoints} aria-label="显示肢体关键点"
+            onChange={event => props.onTogglePoseKeypoints(event.target.checked)} />
+          <span className="button-label">显示肢体关键点</span>
+        </label>
       </ControlGroup>
       <div className="privacy-note" title="本地处理：画面仅在本机分析，不保存视频。">
         <Icon name="shield" /><div><strong>本地处理</strong><p>画面仅在本机分析，不保存视频。</p></div>
