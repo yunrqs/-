@@ -2,8 +2,8 @@
 
 This folder combines the EyeCue video-and-gaze distraction classifier with
 GazeFollower webcam gaze tracking. The GazeFollower model assets are included.
-The EyeCue training checkpoint, training dataset, and driving videos are not
-included.
+The EyeCue training checkpoint is hosted publicly on Hugging Face; the training
+dataset and driving videos are not included.
 
 ## Required EyeCue checkpoint
 
@@ -15,7 +15,10 @@ driver-gaze-demo/EyeCue/checkpoints/best_model.pth
 
 The checkpoint is about 1.66 GB and is intentionally not stored in Git. It
 contains the trained EyeCue encoders, fusion module, classifier, and optimizer
-state. There is currently no public download URL configured for this file.
+state. Download it from the public
+[Hugging Face model repository](https://huggingface.co/Thorfinn11111/eyecue_best_model)
+using a regular VS Code PowerShell terminal from this `driver-gaze-demo`
+directory:
 
 To copy a checkpoint you already have on Windows:
 
@@ -24,18 +27,13 @@ New-Item -ItemType Directory -Force .\EyeCue\checkpoints | Out-Null
 Copy-Item "D:\path\to\best_model.pth" .\EyeCue\checkpoints\best_model.pth
 ```
 
-If you receive a public direct-download URL, download it from the regular VS
-Code PowerShell terminal with `curl.exe`:
-
-```powershell
 New-Item -ItemType Directory -Force .\EyeCue\checkpoints | Out-Null
-curl.exe -L --fail --retry 5 --output .\EyeCue\checkpoints\best_model.pth "PASTE_PUBLIC_DIRECT_DOWNLOAD_URL_HERE"
+curl.exe -L --fail --retry 5 --output .\EyeCue\checkpoints\best_model.pth "https://huggingface.co/Thorfinn11111/eyecue_best_model/resolve/main/best_model.pth"
 Get-Item .\EyeCue\checkpoints\best_model.pth | Select-Object Name,Length
 ```
 
-Replace the placeholder with the actual direct-download URL. No public URL is
-available yet, so the placeholder command is not runnable until the checkpoint
-is published by its owner.
+The model repository is public, and its `best_model.pth` file is available
+without a token. The expected file size is 1,661,075,654 bytes.
 
 ## Install
 

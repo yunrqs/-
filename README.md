@@ -62,6 +62,25 @@ MWDET 数据训练 `focused / not_focused` 二分类器，并保留 PAFE 视频�
 其模型资源随前端构建发布。使用方式见 [视线预测说明](docs/specifications/gaze-prediction.md)。
 详见 [架构说明](docs/architecture.md)。
 
+## 驾驶视频注视点叠加与分心预测（EyeCue + GazeFollower）
+
+仓库另含独立的驾驶视频演示：[driver-gaze-demo](driver-gaze-demo/README.md)。
+它使用 GazeFollower 进行摄像头注视点估计与校准，并将 EyeCue 分心概率叠加到播放的驾驶视频上。
+这与本仓库现有的浏览器视线面板和 MWDET 眨眼/情绪分类流程相互独立。
+
+EyeCue 最佳模型 checkpoint（约 1.66 GB）已公开托管在
+[Hugging Face 模型仓库](https://huggingface.co/Thorfinn11111/eyecue_best_model)，
+不包含在 GitHub 中。克隆仓库后，在 PowerShell 中从仓库根目录下载：
+
+```powershell
+New-Item -ItemType Directory -Force .\driver-gaze-demo\EyeCue\checkpoints | Out-Null
+curl.exe -L --fail --retry 5 --output .\driver-gaze-demo\EyeCue\checkpoints\best_model.pth "https://huggingface.co/Thorfinn11111/eyecue_best_model/resolve/main/best_model.pth"
+Get-Item .\driver-gaze-demo\EyeCue\checkpoints\best_model.pth | Select-Object Name,Length
+```
+
+完整安装、摄像头校准和驾驶视频预测步骤见演示目录的
+[README](driver-gaze-demo/README.md)。
+
 ## 2. 方法与论文对应关系
 
 每个注意力探针对应探针前一个时间窗口，默认长度为 5 秒。系统从窗口中提取：
